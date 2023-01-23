@@ -20,8 +20,9 @@ const imageList = ['theprintscompany.6b5c311c-efaf-4d9e-8083-35fecd2f8355.jpeg',
 export default function ThreeDModalRenderer(props) {
     const [objChildren, setObjChildren] = useState([]);
     const [ambientLightIntensity, setAmbientLightIntensity] = useState(0.5);
-    const [patternXOffset,setPatternXOffset] = useState(0);
-    const [patternYOffset,setPatternYOffset] = useState(0);
+    const [patternXOffset, setPatternXOffset] = useState(0);
+    const [patternYOffset, setPatternYOffset] = useState(0);
+    const [patternRotation, setPatternRotation] = useState(0);
     const [textureRatio, setTextureRatio] = useState(10);
     const [wireframeState, setWireframeState] = useState(false);
     const [selectedChildNode, setSelectedChildNode] = useState(null)
@@ -64,6 +65,9 @@ export default function ThreeDModalRenderer(props) {
                             onChange={(value) => setPatternXOffset(value)}/>
                     <Slider step={1} min={0} max={100} value={patternYOffset}
                             onChange={(value) => setPatternYOffset(value)}/>
+                    <Typography>Rotation (Degree)</Typography>
+                    <Slider step={1} min={0} max={360} value={patternRotation}
+                            onChange={(value) => setPatternRotation(value)}/>
                     <Checkbox checked={wireframeState}
                               onChange={(e) => setWireframeState(e.target.checked)}>Wireframe</Checkbox>
 
@@ -76,10 +80,11 @@ export default function ThreeDModalRenderer(props) {
                             penumbra={1}
                             position={spotLightPosition}
                         />
-                        <mesh position={[3,-1,-2]}>
+                        <mesh position={[3, -1, -2]}>
                             <boxGeometry args={[2, 2, 2]}/>
                             <MeshMaterial image={selectedTextureImage} ratio={textureRatio}
-                                          wireframeState={wireframeState} patternXOffset={patternXOffset} patternYOffset={patternYOffset}/>
+                                          wireframeState={wireframeState} patternXOffset={patternXOffset}
+                                          patternYOffset={patternYOffset} patternRotation={patternRotation}/>
                         </mesh>
                         <mesh position={[0, -4, 0]} scale={0.04} color={"red"}>
                             <ambientLight intensity={ambientLightIntensity}/>
@@ -97,7 +102,9 @@ export default function ThreeDModalRenderer(props) {
                                 {objChildren.map((item, index) => <mesh geometry={item.geometry} color={""}>
                                     <MeshMaterial image={selectedTextureImage} ratio={textureRatio}
                                                   wireframeState={wireframeState}
-                                                  selectedChild={index === selectedChildNode} patternXOffset={patternXOffset} patternYOffset={patternYOffset}/>
+                                                  selectedChild={index === selectedChildNode}
+                                                  patternXOffset={patternXOffset} patternYOffset={patternYOffset}
+                                                  patternRotation={patternRotation}/>
                                 </mesh>)}
                                 <ContactShadows
                                     rotation-x={Math.PI / 2}
@@ -137,7 +144,8 @@ function MeshMaterial(props) {
     const texture = useLoader(TextureLoader, '/' + props.image);
     texture.wrapS = texture.wrapT = RepeatWrapping;
     texture.repeat.set(props.ratio, props.ratio);
-    texture.offset.set(props.patternXOffset/100,props.patternYOffset/100)
+    texture.offset.set(props.patternXOffset / 100, props.patternYOffset / 100);
+    texture.rotation = props.patternRotation * (Math.PI/180);
     return <meshPhongMaterial attach="material" map={texture}
                               wireframe={props.wireframeState}
                               color={props.selectedChild ? "#0066ff" : "white"}/>
