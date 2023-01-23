@@ -1,9 +1,9 @@
 import React, {Suspense, useEffect, useState} from "react";
-import {Button, Card, Checkbox, Col, Row, Slider, Typography} from "antd";
+import {Button, Card, Checkbox, Col, InputNumber, Row, Slider, Typography} from "antd";
 import {OBJLoader} from "three/examples/jsm/loaders/OBJLoader";
 import {Canvas, useLoader} from "@react-three/fiber";
 import {Environment, PerspectiveCamera, OrbitControls, Html, useProgress, ContactShadows} from "@react-three/drei";
-import {TextureLoader} from "three";
+import {RepeatWrapping, TextureLoader} from "three";
 
 const imageList = ['theprintscompany.6b5c311c-efaf-4d9e-8083-35fecd2f8355.jpeg',
     'theprintscompany.52fdc227-08b2-485e-ba0d-78a71c08dbf3.jpeg',
@@ -20,7 +20,9 @@ const imageList = ['theprintscompany.6b5c311c-efaf-4d9e-8083-35fecd2f8355.jpeg',
 export default function ThreeDModalRenderer(props) {
     const [objChildren, setObjChildren] = useState([]);
     const [ambientLightIntensity, setAmbientLightIntensity] = useState(0.5);
-    const [textureRatio, setTextureRatio] = useState(1);
+    const [patternXOffset,setPatternXOffset] = useState(0);
+    const [patternYOffset,setPatternYOffset] = useState(0);
+    const [textureRatio, setTextureRatio] = useState(10);
     const [wireframeState, setWireframeState] = useState(false);
     const [selectedChildNode, setSelectedChildNode] = useState(null)
     const [selectedTextureImage, setSelectedTextureImage] = useState("c72cfe94-7ec4-4bb0-8e3a-a5615b53d000.jpeg")
@@ -53,9 +55,15 @@ export default function ThreeDModalRenderer(props) {
                     <Typography>Ambient Light</Typography>
                     <Slider step={0.1} min={0.1} max={1} value={ambientLightIntensity}
                             onChange={(value) => setAmbientLightIntensity(value)}/>
-                    <Typography>Repeat Ratio</Typography>
-                    <Slider step={0.01} min={0.01} max={1} value={textureRatio}
+                    <Typography>Pattern Size</Typography>
+                    <Slider step={1} min={1} max={100} value={textureRatio}
                             onChange={(value) => setTextureRatio(value)}/>
+
+                    <Typography>Pattern Position</Typography>
+                    <Slider step={1} min={0} max={100} value={patternXOffset}
+                            onChange={(value) => setPatternXOffset(value)}/>
+                    <Slider step={1} min={0} max={100} value={patternYOffset}
+                            onChange={(value) => setPatternYOffset(value)}/>
                     <Checkbox checked={wireframeState}
                               onChange={(e) => setWireframeState(e.target.checked)}>Wireframe</Checkbox>
 
@@ -68,6 +76,11 @@ export default function ThreeDModalRenderer(props) {
                             penumbra={1}
                             position={spotLightPosition}
                         />
+                        <mesh position={[3,-1,-2]}>
+                            <boxGeometry args={[2, 2, 2]}/>
+                            <MeshMaterial image={selectedTextureImage} ratio={textureRatio}
+                                          wireframeState={wireframeState} patternXOffset={patternXOffset} patternYOffset={patternYOffset}/>
+                        </mesh>
                         <mesh position={[0, -4, 0]} scale={0.04} color={"red"}>
                             <ambientLight intensity={ambientLightIntensity}/>
 
@@ -84,7 +97,7 @@ export default function ThreeDModalRenderer(props) {
                                 {objChildren.map((item, index) => <mesh geometry={item.geometry} color={""}>
                                     <MeshMaterial image={selectedTextureImage} ratio={textureRatio}
                                                   wireframeState={wireframeState}
-                                                  selectedChild={index === selectedChildNode}/>
+                                                  selectedChild={index === selectedChildNode} patternXOffset={patternXOffset} patternYOffset={patternYOffset}/>
                                 </mesh>)}
                                 <ContactShadows
                                     rotation-x={Math.PI / 2}
@@ -121,8 +134,10 @@ function Loader() {
 }
 
 function MeshMaterial(props) {
-    const texture = useLoader(TextureLoader, '/' + props.image)
+    const texture = useLoader(TextureLoader, '/' + props.image);
+    texture.wrapS = texture.wrapT = RepeatWrapping;
     texture.repeat.set(props.ratio, props.ratio);
+    texture.offset.set(props.patternXOffset/100,props.patternYOffset/100)
     return <meshPhongMaterial attach="material" map={texture}
                               wireframe={props.wireframeState}
                               color={props.selectedChild ? "#0066ff" : "white"}/>
