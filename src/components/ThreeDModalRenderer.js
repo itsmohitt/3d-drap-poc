@@ -1,8 +1,8 @@
 import React, {Suspense, useEffect, useState} from "react";
-import {Button, Card, Checkbox, Col, InputNumber, Row, Slider, Typography} from "antd";
+import {Button, Card, Checkbox, Col, Radio, Row, Slider, Typography} from "antd";
 import {OBJLoader} from "three/examples/jsm/loaders/OBJLoader";
 import {Canvas, useLoader} from "@react-three/fiber";
-import {Environment, PerspectiveCamera, OrbitControls, Html, useProgress, ContactShadows} from "@react-three/drei";
+import {ContactShadows, Html, OrbitControls, useProgress} from "@react-three/drei";
 import {RepeatWrapping, TextureLoader} from "three";
 
 const imageList = ['theprintscompany.6b5c311c-efaf-4d9e-8083-35fecd2f8355.jpeg',
@@ -27,20 +27,31 @@ export default function ThreeDModalRenderer(props) {
     const [wireframeState, setWireframeState] = useState(false);
     const [selectedChildNode, setSelectedChildNode] = useState(null)
     const [selectedTextureImage, setSelectedTextureImage] = useState("c72cfe94-7ec4-4bb0-8e3a-a5615b53d000.jpeg")
-    const obj = useLoader(OBJLoader, '/dress.obj')
+    const obj = useLoader(OBJLoader, '/' + props.selectedModel)
     useEffect(() => {
         let children = []
         obj.traverse(function (child) {
             children.push(child)
         })
         setObjChildren(children);
-    }, []);
+    }, [obj,props.selectedModel]);
     const spotLightPosition = [0, 1000, 100];
 
     return (
         <div className="main-container">
             <Row>
                 <Col span={24}>
+                    <Typography level={5}>Select Model</Typography>
+                    <Radio.Group
+                        onChange={(e)=>props.setSelectedModel(e.target.value)}
+                        options={modelList}
+                        value={props.selectedModel}
+                        optionType="button"
+                        buttonStyle="solid" style={{
+                            display:'block',
+                    margin:"auto",
+                    marginBottom:8
+                    }}/>
                     <Card>
                         {imageList.map(image => <Card.Grid style={{
                             width: `${100 / imageList.length}%`,
@@ -57,7 +68,7 @@ export default function ThreeDModalRenderer(props) {
                     <Slider step={0.1} min={0.1} max={1} value={ambientLightIntensity}
                             onChange={(value) => setAmbientLightIntensity(value)}/>
                     <Typography>Pattern Size</Typography>
-                    <Slider step={1} min={1} max={100} value={textureRatio}
+                    <Slider step={0.01} min={0.01} max={1} value={textureRatio}
                             onChange={(value) => setTextureRatio(value)}/>
 
                     <Typography>Pattern Position</Typography>
@@ -80,12 +91,12 @@ export default function ThreeDModalRenderer(props) {
                             penumbra={1}
                             position={spotLightPosition}
                         />
-                        <mesh position={[3, -1, -2]}>
-                            <boxGeometry args={[2, 2, 2]}/>
-                            <MeshMaterial image={selectedTextureImage} ratio={textureRatio}
-                                          wireframeState={wireframeState} patternXOffset={patternXOffset}
-                                          patternYOffset={patternYOffset} patternRotation={patternRotation}/>
-                        </mesh>
+                        {/*<mesh position={[3, -1, -2]}>*/}
+                        {/*    <boxGeometry args={[2, 2, 2]}/>*/}
+                        {/*    <MeshMaterial image={selectedTextureImage} ratio={textureRatio}*/}
+                        {/*                  wireframeState={wireframeState} patternXOffset={patternXOffset}*/}
+                        {/*                  patternYOffset={patternYOffset} patternRotation={patternRotation}/>*/}
+                        {/*</mesh>*/}
                         <mesh position={[0, -4, 0]} scale={0.04} color={"red"}>
                             <ambientLight intensity={ambientLightIntensity}/>
 
@@ -145,8 +156,25 @@ function MeshMaterial(props) {
     texture.wrapS = texture.wrapT = RepeatWrapping;
     texture.repeat.set(props.ratio, props.ratio);
     texture.offset.set(props.patternXOffset / 100, props.patternYOffset / 100);
-    texture.rotation = props.patternRotation * (Math.PI/180);
+    texture.rotation = props.patternRotation * (Math.PI / 180);
     return <meshPhongMaterial attach="material" map={texture}
                               wireframe={props.wireframeState}
                               color={props.selectedChild ? "#0066ff" : "white"}/>
 }
+
+const modelList = [{
+    label: 'Dress',
+    value: 'dress.obj'
+},{
+    label: 'Shirt',
+    value:'shirt.obj'
+// },{
+//     label: 'Tshirt',
+//     value : 'tshirt.obj'
+// },{
+//     label: 'Gown',
+//     value : 'gown.obj'
+}, {
+    label: 'Hoodie',
+    value : 'hoodie.obj'
+}]
